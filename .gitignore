@@ -1,0 +1,8 @@
+*.pdf
+.vscode/
+.DS_Store
+*.a
+*.o
+*.out
+main.c
+file_to_read.txt
