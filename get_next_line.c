@@ -6,88 +6,99 @@
 /*   By: dshatilo <dshatilo@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/09 16:39:03 by dshatilo          #+#    #+#             */
-/*   Updated: 2023/11/13 17:24:07 by dshatilo         ###   ########.fr       */
+/*   Updated: 2023/11/14 18:48:52 by dshatilo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-// static char	*ft_strjoin(char const *s1, char const *s2, size_t s2_len);
+char	*get_string(char *s, char *buffer, int fd, ssize_t bytes);
+
+char	*get_line(char **str);
+
+char	*dealloc(char *s, size_t start);
 
 char	*get_next_line(int fd)
 {
 	static char	*string = 0;
+	char		*buffer;
 	char		*line;
 
-	if (!string)
-	{
-		string = (char *)malloc(sizeof(char) * 1);
-		if (!string)
-			return (0);
-		*string = 0;
-	}
-	if (!string) //prevent attempt to read file after its end.
+	if (fd < 0)
 		return (0);
-	string = get_string(string, fd);
-	line = ft_getline(&string);
-
+	buffer = 0;
+	string = get_string(string, buffer, fd, 1);
+	if (!string)
+		return (0);
+	line = get_line(&string);
 	return (line);
 }
 
-
-char	*get_string(char *s, int fd)
+char	*get_string(char *s, char *buffer, int fd, ssize_t bytes)
 {
-	static size_t		bytes_read = 1;
-	char				*buffer;
-	char				*string;
-
-	string = 0;
-	while (!ft_strchr(string, '\n') && bytes_read > 0)
+	s = check_string(s);
+	if (!s)
+		return (0);
+	while ((s && !ft_strchr(s, '\n')) && bytes != 0)
 	{
 		buffer = (char *)malloc(sizeof(char) * BUFFER_SIZE);
 		if (!buffer)
+			return (ft_free(s));
+		bytes = read(fd, buffer, BUFFER_SIZE);
+		if (bytes == -1)
 		{
 			free(s);
-			return (0);
+			return (ft_free(buffer));
 		}
-		bytes_read = read(fd, buffer, BUFFER_SIZE);
-		if (bytes_read <= 0)
-			return (0);
-		string = ft_strjoin(s, buffer, bytes_read);
-		if (!string)
-			return (0);
+		if (!bytes)
+		{
+			free(buffer);
+			return (s);
+		}
+		s = add_to_string(s, buffer, bytes);
+		free (buffer);
 	}
-	return (string);
-}
-
-static char	*ft_strjoin(char const *s1, char const *s2, size_t s2_len)
-{
-	size_t	newlen;
-	size_t	s1_len;
-	char	*s;
-
-	s1_len = ft_strlen(s1);
-	if ((size_t)(-1) - s1_len < s2_len)
-		return (0);
-	newlen = s1_len + s2_len + 1;
-	s = (char *)malloc(sizeof(char) * newlen);
-	if (!s)
-	{
-		free(s1);
-		free(s2);
-		return (0);
-	}
-	s = ft_strncpy(s, (char *)s1, s1_len);
-	ft_stnrcpy(s + s1_len, (char *)s2, s2_len);
-	s[newlen] = 0;
-	free(s1);
-	free(s2);
 	return (s);
 }
 
-
-char	*ft_getline(char *string);
+char	*get_line(char **str)
 {
-	
+	char	*line;
+	size_t	line_len;
+	char	*s;
+
+	s = *str;
+	line_len = 0;
+	while (s[line_len] != 0 && s[line_len] != '\n')
+		line_len++;
+	if (s[line_len] == '\n')
+		line_len++;
+	line = (char *)malloc(sizeof(char) * (line_len + 1));
+	if (!line)
+		return (ft_free(s));
+	line[line_len] = 0;
+	ft_strncpy(line, s, line_len);
+	*str = dealloc(s, line_len);
+	if (!s)
+		return (0);
+	return (line);
 }
 
+char	*dealloc(char *s, size_t start)
+{
+	char	*new_s;
+	size_t	s_len;
+	size_t	n_len;
+
+	s_len = 0;
+	while (s[s_len] != 0)
+		s_len++;
+	n_len = s_len - start;
+	new_s = (char *)malloc(sizeof(char) * (n_len + 1));
+	if (!new_s)
+		return (ft_free(s));
+	ft_strncpy(new_s, s + start, n_len);
+	new_s[n_len] = 0;
+	free(s);
+	return (new_s);
+}
