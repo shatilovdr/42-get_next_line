@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dshatilo <dshatilo@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/09 16:39:03 by dshatilo          #+#    #+#             */
-/*   Updated: 2023/11/15 16:58:24 by dshatilo         ###   ########.fr       */
+/*   Updated: 2023/11/15 17:02:41 by dshatilo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 char	*get_string(char *s, char *buffer, int fd, ssize_t bytes);
 
@@ -20,23 +20,23 @@ char	*dealloc(char *s, char *line);
 
 char	*get_next_line(int fd)
 {
-	static char	*string;
+	static char	*str_arr[10240];
 	char		*buffer;
 	char		*line;
 
 	if (fd < 0 || BUFFER_SIZE <= 0 || BUFFER_SIZE >= (size_t)(-2))
 		return (0);
 	buffer = 0;
-	string = get_string(string, buffer, fd, 1);
-	if (!string)
+	str_arr[fd] = get_string(str_arr[fd], buffer, fd, 1);
+	if (!str_arr[fd])
 		return (0);
-	line = ft_get_line(string);
+	line = ft_get_line(str_arr[fd]);
 	if (!line)
 	{
-		string = ft_free(string);
+		str_arr[fd] = ft_free(str_arr[fd]);
 		return (0);
 	}
-	string = dealloc(string, line);
+	str_arr[fd] = dealloc(str_arr[fd], line);
 	return (line);
 }
 
@@ -94,10 +94,10 @@ char	*dealloc(char *s, char *line)
 	size_t	n_len;
 	size_t	line_len;
 
-	s_len = 0;
 	line_len = 0;
 	while (line[line_len] != 0)
 		line_len++;
+	s_len = 0;
 	while (s[s_len] != 0)
 		s_len++;
 	n_len = s_len - line_len;
